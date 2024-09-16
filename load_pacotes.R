@@ -4,14 +4,12 @@ if (!require(pacman)) install.packages("pacman")
 
 pacman::p_load(
   shiny, # Permite criar aplicativos web interativos com R
-  shinydashboard, # Cria painéis interativos com o Shiny
-  shinydashboardPlus, # Adiciona mais recursos e opções ao pacote shinydashboard
+  bs4Dash, # Fornece um conjunto de ferramentas e temas Bootstrap 4 para criar dashboards interativos com Shiny
   shinyWidgets, # Adiciona mais widgets e opções ao Shiny
   shinycssloaders, # Adiciona animações de carregamento a saídas Shiny
   shinyjs, # Permite usar JavaScript em aplicativos Shiny
   waiter, # Adiciona telas de carregamento a aplicativos Shiny
   rintrojs,
-  
   # Manipulação e visualização de dados
   tidyverse, # Uma coleção de pacotes R para manipulação e visualização de dados
   DT, # Fornece uma interface R para a biblioteca JavaScript DataTables, permitindo criar tabelas interativas
@@ -45,3 +43,52 @@ pacman::p_load(
   fontawesome, # Fornece acesso aos ícones do Font Awesome em documentos R Markdown e aplicativos Shiny
   BAMMtools, # Fornece ferramentas para análise filogenética de taxas de diversificação usando o método BAMM (Bayesian Analysis of Macroevolutionary Mixtures,
   classInt) # Seleciona intervalos de classe para dados numéricos
+
+#Função de formatação mapa
+labelFormat_decimal <- function (prefix = "", suffix = "", between = " &ndash; ", digits = 3,
+                                 big.mark = ",", transform = identity, decimal.mark = "."){
+  formatNum <- function(x) {
+    format(round(transform(x), digits), trim = TRUE, scientific = FALSE,
+           big.mark = big.mark, decimal.mark = decimal.mark)
+  }
+  function(type, ...) {
+    switch(type, numeric = (function(cuts) {
+      paste0(prefix, formatNum(cuts), suffix)
+    })(...), bin = (function(cuts) {
+      n <- length(cuts)
+      paste0(prefix, formatNum(cuts[-n]), between, formatNum(cuts[-1]),
+             suffix)
+    })(...), quantile = (function(cuts, p) {
+      n <- length(cuts)
+      p <- paste0(round(p * 100), "%")
+      cuts <- paste0(formatNum(cuts[-n]), between, formatNum(cuts[-1]))
+      paste0("<span title=\"", cuts, "\">", prefix, p[-n],
+             between, p[-1], suffix, "</span>")
+    })(...), factor = (function(cuts) {
+      paste0(prefix, as.character(transform(cuts)), suffix)
+    })(...))
+  }
+}
+
+write_rds(base_dados,"base_dados.RDS")
+read_rds("base_dados.RDS")
+
+geopa <- st_transform(geopa, crs = 4326)
+
+
+ri <- readRDS("ri.rds")
+#Excluindo Pará da base ri
+ri <- ri %>% filter(`Região de Integração` != "Pará")
+#Renomear colunas
+ri <- ri %>% rename(ri = `Região de Integração`, muni = Estado_Município)
+#Base para completar Anos
+anos_completos <- tibble(ano = seq(1934, 2023))
+
+sexos <- tibble(sexo = c("Masculino","Feminino"))
+faixa <- tibble(intervalos_idade = c("18-24 anos","25-34 anos","35-44 anos",
+                                     "45-54 anos","55-64 anos","65-74 anos","75 anos mais"))
+habi <- tibble(categoria = c("A","B","C","D","E"))
+mista <- tibble(categoria_mista = c("Apenas Moto","Apenas Veículo","Ambos"))
+atividade <- tibble(categoria = c("Sim","Não"))
+
+
